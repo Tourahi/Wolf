@@ -19,7 +19,48 @@ LUAJIT_URL = http://luajit.org/download/$(LUAJIT_V).tar.gz
 # LPEG
 LPEG_V = lpeg-0.10.2
 LPEG_CHECKSUM = d1a7698e4bcd0ac305633774062d22b27300a41673c3d733ea9993244a64ea6f
-LPEG = deps/$(LPEG_VER)
+LPEG = deps/$(LPEG_V)
 LPEG_OBJECT = $(LPEG)/lpeg.o
-LPEG_URL = http://nordman.org/mirror/lpeg/$(LPEG_VER).tar.gz
+LPEG_URL = http://nordman.org/mirror/lpeg/$(LPEG_V).tar.gz
 
+CFLAGS = -Wall -O2 -g $(LUAJIT_CFLAGS) $(GTK_CFLAGS) -DWOLF_PREFIX=$(PREFIX)
+ARCHIVES = $(LUAJIT_ARCHIVE)
+LIBS = -lm -ldl ${GTK_LIBS}
+LD_FLAGS = -Wl,-E
+OBJECTS = main.o process_helpers.o
+DEP_OBJECTS = $(LPEG_OBJECT)
+
+all: wolf bytecode
+
+wolf: ${OBJECTS} main.h $(ARCHIVES) $(DEP_OBJECTS) Makefile
+	${CC} -o wolf ${OBJECTS} $(DEP_OBJECTS) ${ARCHIVES} ${LIBS} ${LD_FLAGS}
+
+
+${OBJECTS}: %.o : %.c main.h $(LUAJIT)
+	${CC} -c $< ${CFLAGS}
+
+$(LPEG):
+	@bin/download $(LPEG_URL) $(LPEG_CHECKSUM) tar xzf {file} -C deps
+
+$(LPEG_OBJECT): $(LPEG) $(LUAJIT)
+	cd ${LPEG} && $(MAKE) lpeg.o LUADIR=../../$(LUAJIT)/src
+
+$(LUAJIT):
+	@tools/download $(LUAJIT_URL) $(LUAJIT_CHECKSUM) tar xzf {file} -C deps
+	@perl -piorig -e 's/LUA_IDSIZE\s*\d+/LUA_IDSIZE 120/' $(LUAJIT)/src/luaconf.h
+
+$(LUAJIT_ARCHIVE): $(LUAJIT)
+	cd ${LUAJIT} && $(MAKE) XCFLAGS="-DLUAJIT_ENABLE_LUA52COMPAT"
+
+
+deps-download: $(LUAJIT) $(LPEG)
+
+deps-purge:
+	rm -rf $(LUAJIT) $(LPEG)
+
+bytecode: wolf
+	-@find ../lib ../bundles -name '*.bc' | xargs rm
+	@find ../lib ../bundles -name '*.lua' -o -name '*.moon' | xargs ./wolf --compile
+
+clean:
+	-rm -f ${OBJECTS}
