@@ -19,13 +19,14 @@ fi
 file_cs=$($sha256 $tmp | awk '{print $1}')
 
 if [ "$checksum" != "$file_cs" ]; then
-  echo "ERROR: Checksum mismatch for $file (expected $checksum, got $file_checksum)"
+  echo "ERROR: Checksum mismatch for $file (expected $checksum, got $file_cs)"
   rm $tmp
   exit 1
 fi
 
 echo "Checksum is OK."
 
+# Double shift to discard of the file and checksum
 shift 
 shift
 
