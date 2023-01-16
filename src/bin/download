@@ -1,0 +1,38 @@
+#! /bin/sh
+
+OS=`uname -s`
+sha256=sha256sum
+
+file=$1;
+checksum=$2;
+# safe create a temp file.
+tmp=$(tempfile 2> /dev/null)
+
+echo "$(date +%T): Downloading $file.."
+# Use curl or wget
+if which curl >/dev/null 2>&1; then
+  curl -Lo $tmp $file || exit 1
+else
+  wget -O $tmp $file || exit 1
+fi
+
+file_cs=$($sha256 $tmp | awk '{print $1}')
+
+if [ "$checksum" != "$file_cs" ]; then
+  echo "ERROR: Checksum mismatch for $file (expected $checksum, got $file_checksum)"
+  rm $tmp
+  exit 1
+fi
+
+echo "Checksum is OK."
+
+shift 
+shift
+
+cmd=$(echo "$@" | sed -e "s|{file}|$tmp|g")
+echo "Runing : $cmd"
+$cmd
+ec=$?
+rm $tmp
+exit $ec
+
