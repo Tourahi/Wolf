@@ -59,8 +59,8 @@ deps-purge:
 	rm -rf $(LUAJIT) $(LPEG)
 
 bytecode: wolf
-	-@find ../lib ../bundles -name '*.bc' | xargs rm
-	@find ../lib ../bundles -name '*.lua' -o -name '*.moon' | xargs ./wolf --compile
+	-@find ./lib -name '*.bc' | xargs rm
+	@find ./lib -name '*.lua' -o -name '*.moon' | xargs ./wolf --compile
 
 clean:
 	-rm -f ${OBJECTS}
