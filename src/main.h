@@ -12,3 +12,6 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+
+/* Hookups */
+int luaopen_lpeg (lua_State *L);
