@@ -3,6 +3,7 @@ SUNIX_NAME := $(shell uname -s)
 
 INIT_SCRIPT = lib/wolf
 
+
 # GTK
 GTK = gtk+-3.0
 GTK_CFLAGS = $(shell pkg-config --cflags $(GTK))
@@ -35,7 +36,7 @@ DEP_OBJECTS = $(LPEG_OBJECT)
 all: wolf bytecode
 
 init-script:
-	@find $(INIT_SCRIPT) -name 'init.moon' | xargs moonc
+	@find $(INIT_SCRIPT) -name 'moonSupport.moon' -o -name 'init.moon' | xargs moonc
 
 wolf: init-script ${OBJECTS} main.h $(ARCHIVES) $(DEP_OBJECTS) Makefile
 	${CC} -o wolf ${OBJECTS} $(DEP_OBJECTS) ${ARCHIVES} ${LIBS} ${LD_FLAGS}
@@ -68,4 +69,4 @@ bytecode: wolf
 	@find lib -name '*.lua' -o -name '*.moon' | xargs ./wolf --compile
 
 clean:
-	-rm -f ${OBJECTS} $(INIT_SCRIPT)/init.lua
+	-rm -f ${OBJECTS} $(INIT_SCRIPT)/init.lua $(INIT_SCRIPT)/moonSupport.lua

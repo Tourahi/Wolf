@@ -16,7 +16,8 @@ setPackagePath = (...) ->
 
 
 main = ->
-  setPackagePath 'lib', 'lib/ext', 'lib/ext/moonscript'
+  setPackagePath 'src'
+  assert require 'lib.wolf.moonSupport'
 
 
 main!
