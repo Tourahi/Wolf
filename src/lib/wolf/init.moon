@@ -4,6 +4,19 @@ appRoot, argv = ...
 table = table
 
 
+parseArgs = (argsV) ->
+  opts = {
+    ['-c'] = 'compile'
+    ['-compile'] = 'compile'
+  }
+
+  args = {}
+
+  
+
+compile = (args) ->
+  -- TODO: compile bytecode  
+
 setPackagePath = (...) ->
   paths = {}
   for _, path in ipairs {...}
@@ -34,9 +47,8 @@ jit = jit
 pathSeparator = jit.os == 'Windows' and '\\' or '/'
 
 autoModule = (name) ->
-  return setmetatable name, {
+  return setmetatable {}, {
     __index: (t, key) ->
-      name = "wolf"
       reqName = name .. '.' .. key\gsub('%l%u', (match) ->
         return match\gsub('%u', (upper) ->
           '_' .. upper\lower!))\lower!
@@ -57,12 +69,14 @@ autoModule = (name) ->
   }
 
 main = ->
-  setPackagePath 'src'
+  setPackagePath 'src', 'src/lib'
   -- add custom moon support
   assert require 'lib.wolf.moonSupport'
   table.insert package.loaders, 2, byteCodeLoader!
 
-  --autoModule 'wolf'
+  wolf = autoModule 'wolf'
+
+  print wolf.base
 
 stat, err = pcall main
 
