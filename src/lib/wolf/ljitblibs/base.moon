@@ -21,7 +21,7 @@ forceTypeInit = (name) ->
       name, baseName = name\match '(%S+)%s+#%s+(%S+)'
       base = defs[baseName]
       unless base
-      error "Unknown base '#{baseName}' specified for '#{name}'"
+        error "Unknown base '#{baseName}' specified for '#{name}'"
 
     gtype = forceTypeInit name
 }

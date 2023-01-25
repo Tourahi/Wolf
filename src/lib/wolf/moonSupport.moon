@@ -14,7 +14,7 @@ moon = assert require 'moon'
 -- Supports both lua and moon
 loadfile = (filename, mode, env) ->
   filename = tostring filename
-  if filename\match '%.moon%'
+  if filename\match '%.moon$'
     status, ret = moons.loadfile filename
     if not status then return nil, filename..': '..ret
     return status, ret

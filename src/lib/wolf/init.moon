@@ -3,11 +3,13 @@ appRoot, argv = ...
 
 table = table
 
+Dump = assert(require('moon').p)
+
 
 parseArgs = (argsV) ->
   opts = {
-    ['-c'] = 'compile'
-    ['-compile'] = 'compile'
+    ['--compile']: 'compile',
+    ['-c']: 'compile'
   }
 
   args = {}
@@ -26,7 +28,15 @@ parseArgs = (argsV) ->
   args
 
 compile = (args) ->
-  -- TODO: compile bytecode  
+  for i = 2, #args
+    file = args[i]
+    target = file\gsub '%.%w+$', '.bc'
+    G_log.info 'Compiling ' .. file
+    f = assert loadfile(file)
+    bCode = string.dump f, false
+    fd = assert io.open(target, 'wb')
+    assert fd\write bCode
+    fd\close!
 
 setPackagePath = (...) ->
   paths = {}
@@ -82,12 +92,21 @@ autoModule = (name) ->
 main = ->
   setPackagePath 'src', 'src/lib'
   -- add custom moon support
+  assert require 'lib.wolf.pre'
   assert require 'lib.wolf.moonSupport'
   table.insert package.loaders, 2, byteCodeLoader!
 
-  wolf = autoModule 'wolf'
+  args = parseArgs argv
 
-  print wolf.base
+  Dump args
+
+  if args.compile then compile(args)
+
+  
+
+  --wolf = autoModule 'wolf'
+
+  --print wolf.base
 
 stat, err = pcall main
 

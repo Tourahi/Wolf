@@ -36,6 +36,7 @@ DEP_OBJECTS = $(LPEG_OBJECT)
 all: wolf bytecode
 
 init-script:
+	-@find ./lib/pre -name '*.moon' | xargs rm
 	@find $(INIT_SCRIPT) -name 'moonSupport.moon' -o -name 'init.moon' | xargs moonc
 
 wolf: init-script ${OBJECTS} main.h $(ARCHIVES) $(DEP_OBJECTS) Makefile
@@ -66,7 +67,8 @@ deps-purge:
 
 bytecode: wolf
 	-@find ./lib -name '*.bc' | xargs rm
-	@find ./lib -name '*.lua' -o -name '*.moon' | xargs . --compile
+	@find ./lib -name '*.lua' -o -name '*.moon' | xargs ./wolf -c
 
 clean:
-	-rm -f ${OBJECTS} $(INIT_SCRIPT)/init.lua $(INIT_SCRIPT)/moonSupport.lua
+	-@rm -f ${OBJECTS} $(INIT_SCRIPT)/init.lua $(INIT_SCRIPT)/moonSupport.lua
+	-@find ./lib -name '*.bc' | xargs rm
