@@ -12,7 +12,18 @@ parseArgs = (argsV) ->
 
   args = {}
 
-  
+  for _, arg in ipairs argsV
+    opt = opts[arg]
+    if opt
+      args[opt] = true
+    else
+      args[#args + 1] = arg
+
+  if args.help and not args.spec
+    print help -- TODO
+    os.exit 0
+
+  args
 
 compile = (args) ->
   -- TODO: compile bytecode  
