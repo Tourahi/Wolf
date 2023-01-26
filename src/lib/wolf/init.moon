@@ -3,7 +3,7 @@ appRoot, argv = ...
 
 table = table
 
-Dump = assert(require('moon').p)
+Dump = (o) -> print G_log.t(o)
 
 
 parseArgs = (argsV) ->
@@ -35,7 +35,7 @@ compile = (args) ->
     f = assert loadfile(file)
     bCode = string.dump f, false
     fd = assert io.open(target, 'wb')
-    assert fd\write bCode
+    assert fd\write(bCode)
     fd\close!
 
 setPackagePath = (...) ->
@@ -56,7 +56,7 @@ byteCodeLoader = () ->
     table.insert bases, #bases + 1, base
 
   return (name) ->
-    print 'Debug: bLoader : ' .. name
+    G_log.trace 'byteCodeLoader : ' .. name
     name = name\gsub '%.', '/'
     for i = 1, #bases
       target = bases[i]\gsub '?', name
@@ -73,18 +73,20 @@ autoModule = (name) ->
       reqName = name .. '.' .. key\gsub('%l%u', (match) ->
         return match\gsub('%u', (upper) ->
           '_' .. upper\lower!))\lower!
+              
+      status, _module = pcall(require, reqName)
       
-      status, _module = pcall require, reqName
-      if not status
-        relativePath = reqName\gsub '%.', pathSeparator
-        path = table.concat {appRoot, 'src'..pathSeparator..'lib', relativePath}, pathSeparator
-        -- TODO glib bindings
-        -- if ffi.C.g_file_test(path, ffi.C.G_FILE_TEST_IS_DIR) ~= 0
-        --   _module = autoModule reqName
-        -- else
-        --   error _module, 2
-      else
+      if status == false
+        if _module\match 'module.*not found'
+          relativePath = reqName\gsub '%.', pathSeparator
+          path = table.concat {appRoot, 'src'..pathSeparator..'lib', relativePath}, pathSeparator
+          if ffi.C.g_file_test(path, ffi.C.G_FILE_TEST_IS_DIR) ~= 0
+            _module = autoModule reqName
+          else
+            error _module, 2
+        else
           error _module, 2
+        
       t[key] = _module
       _module
   }
@@ -95,18 +97,16 @@ main = ->
   assert require 'lib.wolf.pre'
   assert require 'lib.wolf.moonSupport'
   table.insert package.loaders, 2, byteCodeLoader!
+  require 'ljitblibs.cdefs.glib'
+
+  wolf = autoModule 'wolf'
 
   args = parseArgs argv
 
-  Dump args
 
   if args.compile then compile(args)
 
-  
 
-  --wolf = autoModule 'wolf'
-
-  --print wolf.base
 
 stat, err = pcall main
 
