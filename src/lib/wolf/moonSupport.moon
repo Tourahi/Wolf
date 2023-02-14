@@ -31,7 +31,7 @@ errHandler = (err) ->
   
   trace = debug.traceback "", 2
   trace = trace\match '%s*(.+)%s*$'
-  rewritten = moons.errors.rewrite_traceback trace, err
+  rewritten = moons.errs.rewrite_traceback trace, err
 
   rewritten or err
 

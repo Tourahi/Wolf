@@ -3,7 +3,7 @@ appRoot, argv = ...
 
 table = table
 
-Dump = (o) -> print G_log.t(o)
+export Dump = (o) -> print G_log.t(o)
 
 
 parseArgs = (argsV) ->
@@ -105,6 +105,24 @@ main = ->
 
 
   if args.compile then compile(args)
+
+  base = assert require 'lib.ljitblibs.base'
+  -- TEST 
+  glib = assert require 'lib.ljitblibs.cdefs.gobject'
+  def = {
+    properties: {
+      name: => print "lol"
+    }
+  
+    intern: (name, only_if_exists = false) ->
+      print "intern"
+  
+    from_value: (value) ->
+      print "AtomStruct(value)"
+  
+  }
+
+  --base.define 'GdkAtom', def, (t, name) -> t.intern(name)
 
 
 
