@@ -5,10 +5,12 @@ local util = require('luassert.util')
 -- Spy metatable
 local spy_mt = {
   __call = function(self, ...)
-    local arguments = util.make_arglist(...)
+    local arguments = {...}
+    arguments.n = select('#',...)  -- add argument count for trailing nils
     table.insert(self.calls, util.copyargs(arguments))
     local function get_returns(...)
-      local returnvals = util.make_arglist(...)
+      local returnvals = {...}
+      returnvals.n = select('#',...)  -- add argument count for trailing nils
       table.insert(self.returnvals, util.copyargs(returnvals))
       return ...
     end
@@ -19,7 +21,6 @@ local spy_mt = {
 local spy   -- must make local before defining table, because table contents refers to the table (recursion)
 spy = {
   new = function(callback)
-    callback = callback or function() end
     if not util.callable(callback) then
       error("Cannot spy on type '" .. type(callback) .. "', only on functions or callable elements", util.errorlevel())
     end
@@ -57,27 +58,11 @@ spy = {
       end,
 
       called_with = function(self, args)
-        local last_arglist = nil
-        if #self.calls > 0 then
-          last_arglist = self.calls[#self.calls].vals
-        end
-        local matching_arglists = util.matchargs(self.calls, args)
-        if matching_arglists ~= nil then
-          return true, matching_arglists.vals
-        end
-        return false, last_arglist
+        return util.matchargs(self.calls, args) ~= nil
       end,
 
       returned_with = function(self, args)
-        local last_returnvallist = nil
-        if #self.returnvals > 0 then
-          last_returnvallist = self.returnvals[#self.returnvals].vals
-        end
-        local matching_returnvallists = util.matchargs(self.returnvals, args)
-        if matching_returnvallists ~= nil then
-          return true, matching_returnvallists.vals
-        end
-        return false, last_returnvallist
+        return util.matchargs(self.returnvals, args) ~= nil
       end
     }, spy_mt)
     assert:add_spy(s)  -- register with the current state
@@ -110,12 +95,7 @@ local function returned_with(state, arguments, level)
   local level = (level or 1) + 1
   local payload = rawget(state, "payload")
   if payload and payload.returned_with then
-    local assertion_holds, matching_or_last_returnvallist = state.payload:returned_with(arguments)
-    local expected_returnvallist = util.shallowcopy(arguments)
-    util.cleararglist(arguments)
-    util.tinsert(arguments, 1, matching_or_last_returnvallist)
-    util.tinsert(arguments, 2, expected_returnvallist)
-    return assertion_holds
+    return state.payload:returned_with(arguments)
   else
     error("'returned_with' must be chained after 'spy(aspy)'", level)
   end
@@ -125,12 +105,7 @@ local function called_with(state, arguments, level)
   local level = (level or 1) + 1
   local payload = rawget(state, "payload")
   if payload and payload.called_with then
-    local assertion_holds, matching_or_last_arglist = state.payload:called_with(arguments)
-    local expected_arglist = util.shallowcopy(arguments)
-    util.cleararglist(arguments)
-    util.tinsert(arguments, 1, matching_or_last_arglist)
-    util.tinsert(arguments, 2, expected_arglist)
-    return assertion_holds
+    return state.payload:called_with(arguments)
   else
     error("'called_with' must be chained after 'spy(aspy)'", level)
   end

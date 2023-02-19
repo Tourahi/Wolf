@@ -2,8 +2,7 @@
 local assert = require 'luassert.assert'
 local spy = require 'luassert.spy'
 local util = require 'luassert.util'
-local unpack = util.unpack
-local pack = util.pack
+local unpack = require 'luassert.compatibility'.unpack
 
 local stub = {}
 
@@ -13,20 +12,22 @@ function stub.new(object, key, ...)
     object = {}
     key = ""
   end
-  local return_values = pack(...)
+  local return_values_count = select("#", ...)
+  local return_values = {...}
   assert(type(object) == "table" and key ~= nil, "stub.new(): Can only create stub on a table key, call with 2 params; table, key", util.errorlevel())
   assert(object[key] == nil or util.callable(object[key]), "stub.new(): The element for which to create a stub must either be callable, or be nil", util.errorlevel())
   local old_elem = object[key]    -- keep existing element (might be nil!)
 
-  local fn = (return_values.n == 1 and util.callable(return_values[1]) and return_values[1])
+  local fn = (return_values_count == 1 and util.callable(return_values[1]) and return_values[1])
   local defaultfunc = fn or function()
-    return unpack(return_values)
+    return unpack(return_values, 1, return_values_count)
   end
   local oncalls = {}
   local callbacks = {}
   local stubfunc = function(...)
-    local args = util.make_arglist(...)
-    local match = util.matchoncalls(oncalls, args)
+    local args = {...}
+    args.n = select('#', ...)
+    local match = util.matchargs(oncalls, args)
     if match then
       return callbacks[match](...)
     end
@@ -47,9 +48,10 @@ function stub.new(object, key, ...)
   end
 
   s.returns = function(...)
-    local return_args = pack(...)
+    local return_args = {...}
+    local n = select('#', ...)
     defaultfunc = function()
-      return unpack(return_args)
+      return unpack(return_args, 1, n)
     end
     return s
   end
@@ -67,14 +69,16 @@ function stub.new(object, key, ...)
   }
 
   s.on_call_with = function(...)
-    local match_args = util.make_arglist(...)
+    local match_args = {...}
+    match_args.n = select('#', ...)
     match_args = util.copyargs(match_args)
     return {
       returns = function(...)
-        local return_args = pack(...)
+        local return_args = {...}
+        local n = select('#', ...)
         table.insert(oncalls, match_args)
         callbacks[match_args] = function()
-          return unpack(return_args)
+          return unpack(return_args, 1, n)
         end
         return s
       end,
