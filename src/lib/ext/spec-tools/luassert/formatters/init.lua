@@ -1,22 +1,30 @@
 -- module will not return anything, only register formatters with the main assert engine
 local assert = require('luassert.assert')
+local match = require('luassert.match')
+local util = require('luassert.util')
 
-local colors = setmetatable({
-  none = function(c) return c end
-},{ __index = function(self, key)
+local isatty, colors do
   local ok, term = pcall(require, 'term')
-  local isatty = io.type(io.stdout) == 'file' and ok and term.isatty(io.stdout)
-  if not ok or not isatty or not term.colors then
-    return function(c) return c end
-  end
-  return function(c)
-    for token in key:gmatch("[^%.]+") do
-      c = term.colors[token](c)
+  isatty = io.type(io.stdout) == 'file' and ok and term.isatty(io.stdout)
+  if not isatty then
+    local isWindows = package.config:sub(1,1) == '\\'
+    if isWindows and os.getenv("ANSICON") then
+      isatty = true
     end
-    return c
   end
+
+  colors = setmetatable({
+    none = function(c) return c end
+  },{ __index = function(self, key)
+    return function(c)
+      for token in key:gmatch("[^%.]+") do
+        c = term.colors[token](c)
+      end
+      return c
+    end
+  end
+  })
 end
-})
 
 local function fmt_string(arg)
   if type(arg) == "string" then
@@ -120,9 +128,23 @@ local function fmt_table(arg, fmtargs)
   local tmax = assert:get_parameter("TableFormatLevel")
   local showrec = assert:get_parameter("TableFormatShowRecursion")
   local errchar = assert:get_parameter("TableErrorHighlightCharacter") or ""
-  local errcolor = assert:get_parameter("TableErrorHighlightColor") or "none"
+  local errcolor = assert:get_parameter("TableErrorHighlightColor")
   local crumbs = fmtargs and fmtargs.crumbs or {}
   local cache = {}
+  local type_desc
+
+  if getmetatable(arg) == nil then
+    type_desc = "(" .. tostring(arg) .. ") "
+  elseif not pcall(setmetatable, arg, getmetatable(arg)) then
+    -- cannot set same metatable, so it is protected, skip id
+    type_desc = "(table) "
+  else
+    -- unprotected metatable, temporary remove the mt
+    local mt = getmetatable(arg)
+    setmetatable(arg, nil)
+    type_desc = "(" .. tostring(arg) .. ") "
+    setmetatable(arg, mt)
+  end
 
   local function ft(t, l, with_crumbs)
     if showrec and cache[t] and cache[t] > 0 then
@@ -165,7 +187,7 @@ local function fmt_table(arg, fmtargs)
     return result .. " }"
   end
 
-  return "(table) " .. ft(arg, 1, true)
+  return type_desc .. ft(arg, 1, true)
 end
 
 local function fmt_function(arg)
@@ -187,6 +209,35 @@ local function fmt_thread(arg)
   end
 end
 
+local function fmt_matcher(arg)
+  if not match.is_matcher(arg) then
+    return
+  end
+  local not_inverted = {
+    [true] = "is.",
+    [false] = "no.",
+  }
+  local args = {}
+  for idx = 1, arg.arguments.n do
+    table.insert(args, assert:format({ arg.arguments[idx], n = 1, })[1])
+  end
+  return string.format("(matcher) %s%s(%s)",
+                       not_inverted[arg.mod],
+                       tostring(arg.name),
+                       table.concat(args, ", "))
+end
+
+local function fmt_arglist(arglist)
+  if not util.is_arglist(arglist) then
+    return
+  end
+  local formatted_vals = {}
+  for idx = 1, arglist.n do
+    table.insert(formatted_vals, assert:format({ arglist[idx], n = 1, })[1])
+  end
+  return "(values list) (" .. table.concat(formatted_vals, ", ") .. ")"
+end
+
 assert:add_formatter(fmt_string)
 assert:add_formatter(fmt_number)
 assert:add_formatter(fmt_boolean)
@@ -195,8 +246,10 @@ assert:add_formatter(fmt_table)
 assert:add_formatter(fmt_function)
 assert:add_formatter(fmt_userdata)
 assert:add_formatter(fmt_thread)
+assert:add_formatter(fmt_matcher)
+assert:add_formatter(fmt_arglist)
 -- Set default table display depth for table formatter
 assert:set_parameter("TableFormatLevel", 3)
 assert:set_parameter("TableFormatShowRecursion", false)
 assert:set_parameter("TableErrorHighlightCharacter", "*")
-assert:set_parameter("TableErrorHighlightColor", "none")
+assert:set_parameter("TableErrorHighlightColor", isatty and "red" or "none")

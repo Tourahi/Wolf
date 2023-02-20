@@ -1,8 +1,9 @@
 local s = require 'say'
 local astate = require 'luassert.state'
 local util = require 'luassert.util'
-local unpack = require 'luassert.compatibility'.unpack
+local unpack = util.unpack
 local obj   -- the returned module table
+local level_mt = {}
 
 -- list of namespaces
 local namespace = require 'luassert.namespaces'
@@ -38,11 +39,10 @@ local __state_meta = {
         end
       end
 
-      local arguments = {...}
-      arguments.n = select('#', ...) -- add argument count for trailing nils
+      local arguments = util.make_arglist(...)
       local val, retargs = assertion.callback(self, arguments, util.errorlevel())
 
-      if not val == self.mod then
+      if (not val) == self.mod then
         local message = assertion.positive_message
         if not self.mod then
           message = assertion.negative_message
@@ -56,8 +56,7 @@ local __state_meta = {
       end
       return ...
     else
-      local arguments = {...}
-      arguments.n = select('#', ...)
+      local arguments = util.make_arglist(...)
       self.tokens = {}
 
       for _, key in ipairs(keys) do
@@ -134,17 +133,31 @@ obj = {
   set_parameter = function(self, name, value)
     astate.set_parameter(name, value)
   end,
-  
+
   get_parameter = function(self, name)
     return astate.get_parameter(name)
-  end,  
-  
+  end,
+
   add_spy = function(self, spy)
     astate.add_spy(spy)
   end,
-  
+
   snapshot = function(self)
     return astate.snapshot()
+  end,
+
+  level = function(self, level)
+    return setmetatable({
+        level = level
+      }, level_mt)
+  end,
+
+  -- returns the level if a level-value, otherwise nil
+  get_level = function(self, level)
+    if getmetatable(level) ~= level_mt then
+      return nil -- not a valid error-level
+    end
+    return level.level
   end,
 }
 
@@ -152,8 +165,8 @@ local __meta = {
 
   __call = function(self, bool, message, level, ...)
     if not bool then
-      local level = (level or 1) + 1
-      error(message or "assertion failed!", level)
+      local err_level = (self:get_level(level) or 1) + 1
+      error(message or "assertion failed!", err_level)
     end
     return bool , message , level , ...
   end,

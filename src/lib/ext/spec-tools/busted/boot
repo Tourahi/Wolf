@@ -1,1 +1,24 @@
--- TODO
+--- Setup and run buster
+-- This is a lua file. The extention was removed
+-- to avoid compiling the file and generating .bc
+-- since that will be done after in Wolf.init
+
+local cli = assert(require('cliargs'))
+local utils = assert(require('pl.utils'))
+local path = assert(require('pl.path'))
+local tablex = assert(require('pl.tablex'))
+local busted = assert(require('busted'))
+
+
+cli:set_name("busted")
+
+cli:add_flag("--version", "Busted version.")
+
+
+local args = cli:parse_args()
+
+if args then
+  if args.version then 
+    return print(busted._VERSION)
+  end
+end

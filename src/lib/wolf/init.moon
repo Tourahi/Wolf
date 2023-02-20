@@ -62,6 +62,8 @@ byteCodeLoader = () ->
     name = name\gsub '%.', '/'
     for i = 1, #bases
       target = bases[i]\gsub '?', name
+      --G_log.trace target
+      -- TO_SEE : The modules get loaded multiple times ?
       f = loadfile target
       if f then return f
     return nil
