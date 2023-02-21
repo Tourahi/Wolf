@@ -8,17 +8,65 @@ local utils = assert(require('pl.utils'))
 local path = assert(require('pl.path'))
 local tablex = assert(require('pl.tablex'))
 local busted = assert(require('busted'))
-
+local ansicolors = assert(require('ansicolors'))
 
 cli:set_name("busted")
 
-cli:add_flag("--version", "Busted version.")
+--- Shows Busted version
+cli:add_flag("-V", "--version", "Busted version.")
+
+--- The current working dir [default: './']
+cli:add_option("-d, --dir=dir", "Path to the current dir", "./")
+
+--- Language [default: 'en']
+cli:add_option("--lang=LANG", "language for messages", "en")
+
+--- outputlib [default: busted.defaultoutput]
+cli:add_option("-o, --output=LIBRARY", "output library to load", busted.defaultoutput)
+
+cli:add_flag("--defer-print", "defer print to when test suite is complete")
+cli:add_flag("--suppress-pending", "suppress 'pending' test output")
+
+cli:add_flag("-v, --verbose", "verbose output of errors")
+
+--- ROOT file/folder
+cli:optarg("ROOT", "Root test file/dir. dirs will be traversed for files that match the --pattern opt.", "spec", 1)
 
 
 local args = cli:parse_args()
 
 if args then
-  if args.version then 
+  if args.version or args.V then 
     return print(busted._VERSION)
   end
+
+  local fpath = args.d
+
+  local tasks = nil
+  local bfile = path.normpath(path.join(fpath, ".busted"))
+  -- See if .busted file exists
+  local success, err = pcall(function() tasks = loadfile(bfile)() end)
+
+  local rootFile = path.normpath(path.join(fpath, args.ROOT))
+  
+  local opts = {
+    path = fpath,
+    lang = args.lang,
+    root_file = rootFile,
+    pattern = args.pattern ~= "" and args.pattern or busted.defaultpattern,
+    cwd = args.d,
+    output = args.output or busted.defaultoutput,
+    filelist = nil,
+    excluded_tags = {},
+    tags = {},
+    verbose = args.verbose,
+  }
+
+  -- run tests
+  local status, failures = busted(opts)
+
+  -- print the status string
+  print((status or "").."\n")
+
+  os.exit(failures)
 end

@@ -3,4 +3,4 @@
 
 describe "moonscript tests", ->
 	it "runs", ->
-		assert.are.equal true, true
+		assert.are.equal true, false
