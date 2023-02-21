@@ -21,9 +21,9 @@ luaConverters = {
 
   'gchar*': (v) ->
     return nil if v == nil
-      s = ffiString v
-      C.g_free v
-      s
+    s = ffiString v
+    C.g_free v
+    s
 }
 
 
