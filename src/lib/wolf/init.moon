@@ -10,6 +10,8 @@ parseArgs = (argsV) ->
   opts = {
     ['--compile']: 'compile',
     ['-c']: 'compile'
+    ['--spec']: 'spec',
+    ['-s']: 'spec'
   }
 
   args = {}
@@ -60,6 +62,8 @@ byteCodeLoader = () ->
     name = name\gsub '%.', '/'
     for i = 1, #bases
       target = bases[i]\gsub '?', name
+      --G_log.trace target
+      -- TO_SEE : The modules get loaded multiple times ?
       f = loadfile target
       if f then return f
     return nil
@@ -91,6 +95,16 @@ autoModule = (name) ->
       _module
   }
 
+runSpec = (_argv) ->
+  print 'specing !!'
+
+  setPackagePath('src/lib/ext/spec-tools')
+  busted = assert loadfile(appRoot .. '/src/lib/ext/spec-tools/busted/boot')
+  Dump {table.unpack(_argv, 3, #_argv)}
+  Dump _argv
+  _G.arg = {table.unpack(_argv, 3, #_argv)}
+  busted()
+
 main = ->
   setPackagePath 'src', 'src/lib'
   -- add custom moon support
@@ -106,21 +120,10 @@ main = ->
 
   if args.compile then compile(args)
 
-  base = assert require 'lib.ljitblibs.base'
-  -- TEST 
-  glib = assert require 'lib.ljitblibs.cdefs.gobject'
-  def = {
-    properties: {
-      name: => print "lol"
-    }
-  
-    intern: (name, only_if_exists = false) ->
-      print "intern"
-  
-    from_value: (value) ->
-      print "AtomStruct(value)"
-  
-  }
+  if args.spec then runSpec(argv)
+
+
+  --base = assert require 'lib.ljitblibs.base'
 
   --base.define 'GdkAtom', def, (t, name) -> t.intern(name)
 
