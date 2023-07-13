@@ -1,5 +1,5 @@
 ffi = require 'ffi'
-require 'lib.ljitblibs.cdefs.glib'
+require 'ljitblibs.cdefs.glib'
 
 ffi.cdef [[
   /* GType */

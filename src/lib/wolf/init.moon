@@ -30,6 +30,7 @@ parseArgs = (argsV) ->
   args
 
 compile = (args) ->
+  G_log.trace 'Compilling...'
   for i = 2, #args
     file = args[i]
     target = file\gsub '%.%w+$', '.bc'
@@ -39,6 +40,7 @@ compile = (args) ->
     fd = assert io.open(target, 'wb')
     assert fd\write(bCode)
     fd\close!
+  G_log.trace 'Compilling Done.'
 
 setPackagePath = (...) ->
   paths = {}
@@ -121,12 +123,6 @@ main = ->
   if args.compile then compile(args)
 
   if args.spec then runSpec(argv)
-
-
-  --base = assert require 'lib.ljitblibs.base'
-
-  --base.define 'GdkAtom', def, (t, name) -> t.intern(name)
-
 
 
 stat, err = pcall main

@@ -1,6 +1,6 @@
+types = assert require 'lib.ljitblibs.gobject.type'
 ffi = assert require 'ffi'
 C, ffiCast = ffi.C, ffi.cast
-types = assert require 'lib.ljitblibs.gobject.type'
 pack, unpack = table.pack, table.unpack
 
 defs = {}
@@ -46,8 +46,8 @@ autoRequire = (module, name) ->
     gtype = forceTypeInit name
     ctype = ffi.typeof "#{name} *"
     cast = (o) -> ffiCast ctype, o
-    print name, gtype,ctype
-    --types.registerCast name, gtype,ctype if gtype
+    
+    types.registerCast name, gtype,ctype if gtype
 
   autoLoading: (name, def) ->
     setConstants def

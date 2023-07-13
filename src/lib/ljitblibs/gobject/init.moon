@@ -1,6 +1,6 @@
-base = assert require 'lib.ljitblibs.base'
-assert require 'lib.ljitblibs.cdefs.gobject'
-ffi = assert require 'ffi'
+base = require 'lib.ljitblibs.base'
+require 'lib.ljitblibs.cdefs.gobject'
+ffi = require 'ffi'
 C = ffi.C
 
 base.autoLoading 'gobject', {

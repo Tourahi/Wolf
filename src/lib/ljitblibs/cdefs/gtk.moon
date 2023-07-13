@@ -1,8 +1,8 @@
 ffi = require 'ffi'
-require 'ljglibs.cdefs.gdk'
-require 'ljglibs.cdefs.glib'
-require 'ljglibs.cdefs.gio'
-require 'ljglibs.cdefs.pango'
+require 'ljitblibs.cdefs.gdk'
+require 'ljitblibs.cdefs.glib'
+require 'ljitblibs.cdefs.gio'
+require 'ljitblibs.cdefs.pango'
 
 ffi.cdef [[
   /* standard enums */

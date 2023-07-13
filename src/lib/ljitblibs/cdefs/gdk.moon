@@ -1,5 +1,5 @@
-require 'ljglibs.cdefs.glib'
-require 'ljglibs.cdefs.cairo'
+require 'ljitblibs.cdefs.glib'
+require 'ljitblibs.cdefs.cairo'
 ffi = require 'ffi'
 
 ffi.cdef [[
