@@ -18,6 +18,20 @@ forceTypeInit = (name) ->
   status, gtype = pcall -> C[typeF]!
   status and gtype or nil 
 
+dispatchProperty = (o, prop, k, v) ->
+  if type(prop) == 'string'
+    k = k\gsub '_', '-'
+    return o\get_typed k, prop unless v != nil
+    o\set_typed k, prop, v.value
+  else
+    if v != nil
+      setter = prop.set
+      error "Attempt to set read-only property: '#{k}'" unless setter
+      setter o, v.value
+    else
+      return prop o if type(prop) == 'function'
+      return prop.get o
+      
 
 
 setConstants = (def) ->
@@ -46,8 +60,15 @@ autoRequire = (module, name) ->
     gtype = forceTypeInit name
     ctype = ffi.typeof "#{name} *"
     cast = (o) -> ffiCast ctype, o
-    
+  
     types.registerCast name, gtype,ctype if gtype
+    local _meta
+    _meta = spec.meta or {}
+
+    with _meta
+      .__index = () -> return nil
+
+    
 
   autoLoading: (name, def) ->
     setConstants def
