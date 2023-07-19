@@ -1,4 +1,5 @@
 ffi = assert require 'ffi'
+lfs = assert require 'lfs'
 appRoot, argv = ...
 
 table = table
@@ -98,12 +99,10 @@ autoModule = (name) ->
   }
 
 runSpec = (_argv) ->
-  print 'specing !!'
+  print 'Setting Up Busted !!'
 
   setPackagePath('src/lib/ext/spec-tools')
   busted = assert loadfile(appRoot .. '/src/lib/ext/spec-tools/busted/boot')
-  Dump {table.unpack(_argv, 3, #_argv)}
-  Dump _argv
   _G.arg = {table.unpack(_argv, 3, #_argv)}
   busted()
 
