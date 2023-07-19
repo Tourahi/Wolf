@@ -6,6 +6,7 @@ dispatch = (hndl, arg) ->
   cb callbacks.castArg(arg), callbacks.castArg(hndl.id)
 
 
+  
 describe 'register(handler, description, handler, ...)', ->
   it 'creates a handler that can be dispatched to', -> 
     handler = spy.new -> nil
